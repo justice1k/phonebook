@@ -1,5 +1,8 @@
 package com.justice1k.phonebook;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,45 +15,40 @@ import java.util.List;
 public class ContactController {
 
     @Autowired
-    ContactService contactService;
+    private final ContactService contactService;
 
     public ContactController(ContactService contactService){
         this.contactService = contactService;
     }
 
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<List<Contact>> findAll(){
-        return new ResponseEntity<>(contactService.findAll(), HttpStatus.OK);
+        return ResponseEntity.ok(contactService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Contact> getContact(@PathVariable Long id){
+    public ResponseEntity<Contact> getContact(@PathVariable @Positive Long id){
         Contact contact = contactService.getContact(id);
         if (contact != null){
             return ResponseEntity.status(HttpStatus.OK).body(contact);
         }
-
-        return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("")
-    public ResponseEntity<Contact> addContact(@RequestBody Contact contact){
+    @PostMapping
+    public ResponseEntity<Contact> addContact(@Valid @RequestBody Contact contact){
         contactService.createContact(contact);
         return ResponseEntity.status(HttpStatus.CREATED).body(contact);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteContact(@PathVariable Long id){
+    public ResponseEntity<?> deleteContact(@PathVariable @Positive Long id){
         boolean deleted = contactService.deleteContact(id);
-
-        if (deleted){
-            return new ResponseEntity<>("Contact deleted",HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Not Found",HttpStatus.NOT_FOUND);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateContact(@PathVariable Long id, @RequestBody Contact contact){
+    public ResponseEntity<String> updateContact(@PathVariable @Positive Long id, @RequestBody @Valid Contact contact){
         boolean updated = contactService.updateContact(id, contact);
         if (updated){
             return new ResponseEntity<>("Contact updated", HttpStatus.OK);
